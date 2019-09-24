@@ -46,10 +46,7 @@ final class PluginsBranding
     }
     protected function __construct()
     {
-        include_once ABSPATH . 'wp-admin/includes/plugin.php';
-        $this->installedPlugins = get_plugins();
-        $this->missingBuilderProPlugin = !isset($this->installedPlugins['elementor-pro/elementor-pro.php']);
-        if (isset($this->installedPlugins[$this->pluginPath])) {
+        if (defined('ELEMENTOR_PRO_VERSION')) {
             //Disable Tracker Notice
             add_filter('pre_option_elementor_tracker_notice', [$this, 'handleTrackerOptionNotice']);
             /*Text*/
@@ -536,6 +533,10 @@ final class PluginsBranding
             border-bottom-color: {$this->colorActiveElement}; 
         } 
         /*---- [Page] ----*/
+        #elementor-panel__editor__help
+        {
+            display:none !important;
+        }
         .elementor-nerd-box 
         {
             padding: 20px;
