@@ -1,13 +1,13 @@
 <?php
 /**
  * Plugin Name: Builder Branding
- * Plugin URI: mailto:vitaliix@gmail.com
- * Author URI: mailto:vitaliix@gmail.com
- * Author: Lupu Vitalie
+ * Plugin URI:  mailto:vitaliix@gmail.com
  * Description: Module to define Plugins Brand, Color and Menu visibility
- * Version: 1.0.4
+ * Version:     2.9.8
+ * Author:      Vitalie Lupu
+ * Author URI:  mailto:vitaliix@gmail.com
  * Text Domain: builderBranding
- * Domain Path: /languages/
+ * Domain Path: /languages
  */
 if (defined('WPINC') == false) exit;
 use Elementor\Plugin;
@@ -15,8 +15,6 @@ use Elementor\Core\Responsive\Responsive;
 final class PluginsBranding
 {
     const TEXT_DOMAIN = 'builderBranding';
-    const TEXT_DOMAIN_ELEMENTOR = 'elementor';
-    const TEXT_DOMAIN_ELEMENTOR_PRO = 'elementor-pro';
 
     const OPTION_PLUGIN_NAME = 'Builder';
     const OPTION_PLUGIN_DESCRIPTION = 'WYSIWYG Builder';
@@ -31,8 +29,6 @@ final class PluginsBranding
     private $colorActiveElement = '#000000';//'green'
 
     private $logoIcon = '\f538';
-    private $installedPlugins = [];
-    private $missingBuilderProPlugin = true;
     private $pluginPath = 'elementor/elementor.php';
     private $pluginPathPro = 'elementor-pro/elementor-pro.php';
 
@@ -180,6 +176,11 @@ final class PluginsBranding
         $cssContent = '';
         //TODO Remove Menu Page Of Elementor not with css but with WP menu handler
         echo "<style id='{$idCssContent}'>{$cssContent}
+        .woocommerce-layout__header .woocommerce-layout__header-breadcrumbs span:first-child,
+		.woocommerce-layout__header .woocommerce-layout__header-breadcrumbs span+span:before,
+		.woocommerce-layout__activity-panel-tabs #activity-panel-tab-inbox{
+			display:none !important;
+		}
         /*Logo*/
         #adminmenu #toplevel_page_elementor div.wp-menu-image:before, 
         #adminmenu #toplevel_page_edit-post_type-elementor_library div.wp-menu-image:before 
@@ -262,14 +263,6 @@ final class PluginsBranding
             background-color: white !important;
         }
         /*Post Page Styles*/
-        #elementor-editor-button,
-        #elementor-switch-mode-button
-        {
-            font-size: 13px;
-            height: 30px;
-            line-height: 28px;
-            padding: 0 12px 2px;
-        }
         .elementor-loader-wrapper
         {
             display:none !important;
@@ -408,7 +401,7 @@ final class PluginsBranding
             content: '{$this->logoIcon}'; 
             font-family: dashicons; 
         }
-        /*---- [Loader] ----*/
+        /*-----------------------------------------------------------[Loader]*/
         .elementor-loading-title {
             color: {$this->colorEditorIcon};
             text-transform: initial;
@@ -432,7 +425,7 @@ final class PluginsBranding
             border-top-color: {$this->colorEditorLoadingBar};
             border-left-color: {$this->colorEditorLoadingBar};
         }
-        /*Disable Pro Upgrade Messages*/
+        /*-----------------------------------------------------------[Pro Messages]*/
         div.elementor-panel-nerd-box,
         div.elementor-control-custom_css_pro, 
         div.elementor-control-section_custom_css_pro,
@@ -440,33 +433,47 @@ final class PluginsBranding
         { 
             display: none; 
         }
-        /*---- [Control: Warning] ----*/
         .elementor-control-wc_style_warning
         {
             display:none;
         }
-        /*---- [Panel] ----*/
+        /*-----------------------------------------------------------[Panel]*/
         .elementor-panel {
             font-size: 15px;
         }
         .elementor-panel #elementor-panel-elements-search-input
         {
-            padding: 5px 27px 5px 0px;
+            padding: 5px 0 5px 20px
             font-size: 14px;
             font-style: initial;
             color: initial;
         }
-        div.elementor-panel a,
-        div.elementor-panel a:hover, 
-        div.elementor-panel .elementor-element:hover .icon,
-        div.elementor-panel .elementor-element:hover .title,
-        div.elementor-panel .elementor-control-type-gallery .elementor-control-gallery-clear 
-        { 
-            color: {$this->colorActiveElement}; 
+        @media (prefers-color-scheme: light){
+            div.elementor-panel a,
+            div.elementor-panel a:hover, 
+            div.elementor-panel .elementor-element:hover .icon,
+            div.elementor-panel .elementor-element:hover .title,
+            div.elementor-panel .elementor-control-type-gallery .elementor-control-gallery-clear 
+            { 
+                color: {$this->colorActiveElement}; 
+            }
+            #elementor-mode-switcher,
+            #elementor-mode-switcher:hover, 
+            #elementor-panel-content-wrapper,
+            .elementor-panel #elementor-panel-header,
+            .elementor-panel #elementor-panel-footer,
+            .elementor-panel .elementor-panel-footer-sub-menu-wrapper
+            {
+                background-color:#E5E5E5 !important;
+            }
+            .elementor-panel #elementor-panel-header-title 
+            {
+                color: {$this->colorEditorIcon};
+            }
         }
         .elementor-panel .elementor-element-wrapper 
         { 
-            width: 84px!important; 
+            width: 110px!important; 
             padding: 4px; 
         }
         .elementor-panel .elementor-element .icon
@@ -490,31 +497,9 @@ final class PluginsBranding
             border-left: none;
             width:auto;
         }
-        #elementor-panel-content-wrapper,
-        .elementor-panel #elementor-panel-footer 
-        { 
-            border-top: 1px solid #ddd; 
-        }
-        .elementor-panel .elementor-panel-footer-sub-menu-wrapper
-        {
-            border-bottom: 1px solid #ddd;
-        }
         #elementor-panel-footer-sub-menu-item-conditions
         {
             display: table !important;
-        }
-        #elementor-mode-switcher,
-        #elementor-mode-switcher:hover, 
-        #elementor-panel-content-wrapper,
-        .elementor-panel #elementor-panel-header,
-        .elementor-panel #elementor-panel-footer,
-        .elementor-panel .elementor-panel-footer-sub-menu-wrapper
-        {
-            background-color:#E5E5E5 !important;
-        }
-        .elementor-panel #elementor-panel-header-title 
-        {
-            color: {$this->colorEditorIcon};
         }
         .elementor-panel #elementor-panel-header-title img
         {
@@ -532,7 +517,62 @@ final class PluginsBranding
         { 
             border-bottom-color: {$this->colorActiveElement}; 
         } 
-        /*---- [Page] ----*/
+        /*-----------------------------------------------------------[Panel: Navigation]*/
+        .elementor-panel .elementor-panel-navigation .elementor-panel-navigation-tab a
+        {
+            color: {$this->colorActiveElement}
+        }
+        /*-----------------------------------------------------------[Panel: Footer]*/
+        .elementor-panel-menu-item-icon
+        {
+            font-size: 19px;
+        }
+        .elementor-panel .elementor-panel-footer-tool i:before
+        {
+            font-size: 19px;
+        }
+        @media (prefers-color-scheme: light){
+            .elementor-panel .elementor-panel-menu-item>*,
+            .elementor-panel .elementor-panel-footer-sub-menu-item:not(.elementor-disabled)>*
+            {
+                background-color:#fff;
+                color: {$this->colorEditorIcon};
+            }
+            .elementor-panel .elementor-panel-footer-sub-menu-item.elementor-disabled
+            {
+                background-color:#fff;
+            }
+            .elementor-panel .elementor-panel-footer-tool.elementor-disabled,
+            .elementor-panel .elementor-panel-footer-sub-menu-item.elementor-disabled>*
+            {
+                color: #cccccc !important;
+            }
+            .elementor-panel .elementor-panel-footer-sub-menu-item.active>*
+            {
+                background-color: #efefef;
+                color:{$this->colorEditorIconHover};
+            }
+            .elementor-panel .elementor-panel-menu-item:hover:not(.active)>*,
+            .elementor-panel .elementor-panel-footer-sub-menu-item:hover:not(.elementor-disabled):not(.active)>*
+            {
+                background-color: #f7f7f7;
+                color:{$this->colorEditorIconHover};
+            }
+            .elementor-panel .elementor-panel-footer-tool
+            {
+                color: {$this->colorEditorIcon};
+            }
+            .elementor-panel .elementor-panel-footer-tool:hover:not(.elementor-disabled)>*,
+            .elementor-panel .elementor-panel-footer-tool.elementor-open:not(.elementor-disabled)>*
+            {
+                color:{$this->colorEditorIconHover};
+            }
+        }
+        .elementor-panel .elementor-panel-footer-tool.elementor-open
+        {
+            box-shadow: inset 0px -3px 0px 0px {$this->colorEditorIconHover};
+        }
+        /*-----------------------------------------------------------[Page]*/
         #elementor-panel__editor__help
         {
             display:none !important;
@@ -590,7 +630,7 @@ final class PluginsBranding
             font-size: 14px;
             padding: 10px 0 !important;
         }
-        /*---- Page: Menu ----*/
+        /*-----------------------------------------------------------[Page: Menu]*/
         .elementor-panel #elementor-panel-page-menu
         {
             padding: 10px 10px 10px 5px;
@@ -599,12 +639,13 @@ final class PluginsBranding
         {
             text-transform: inherit;
             font-size: 14px;
+            text-align: center;
         }
         .elementor-panel .elementor-panel-menu-items
         {
             margin: 10px 0 10px;
         }
-        /*---- Page: Color Scheme ----*/
+        /*-----------------------------------------------------------[Page: Color Scheme]*/
         .wp-color-result
         {
             width: 36px;
@@ -635,87 +676,35 @@ final class PluginsBranding
             margin-top: 0;
             text-align: center;
         }
-        /*---- Panel Navigation ----*/
-        .elementor-panel .elementor-panel-navigation .elementor-panel-navigation-tab a
-        {
-            color: {$this->colorActiveElement}
+        /*-----------------------------------------------------------[Buttons]*/
+        @media (prefers-color-scheme: light){
+            .elementor-header-button:not([disabled]),
+            #elementor-mode-switcher-preview:not([disabled])
+            {
+                color: {$this->colorEditorIcon} !important;
+            }
+            .elementor-panel .elementor-panel-scheme-discard .elementor-button, 
+            .elementor-panel .elementor-panel-scheme-reset .elementor-button
+            {
+                color: {$this->colorEditorIcon} !important;
+            }
+            #elementor-mode-switcher-preview:hover:not([disabled])>*,
+            .elementor-header-button:hover:not([disabled])>*,
+            .elementor-panel .elementor-element:not([disabled]):hover,
+            .elementor-panel .elementor-panel-scheme-discard .elementor-button:hover, 
+            .elementor-panel .elementor-panel-scheme-reset .elementor-button:hover
+            {
+                color:{$this->colorEditorIconHover} !important;
+            }
         }
-        /*---- Panel Footer ----*/
-        .elementor-panel-menu-item-icon
+        #elementor-template-library-header-preview-insert-wrapper .elementor-template-library-template-insert,
+        .elementor-button.elementor-button-success:not([disabled])
         {
-            font-size: 19px;
+            background-color: {$this->colorActiveElement} !important;
         }
-        .elementor-panel .elementor-panel-menu-item>*,
-        .elementor-panel .elementor-panel-footer-sub-menu-item:not(.elementor-disabled)>*
-        {
-            background-color:#fff;
-            color: {$this->colorEditorIcon};
-        }
-        .elementor-panel .elementor-panel-footer-sub-menu-item.elementor-disabled
-        {
-            background-color:#fff;
-        }
-        .elementor-panel .elementor-panel-footer-tool.elementor-disabled,
-        .elementor-panel .elementor-panel-footer-sub-menu-item.elementor-disabled>*
-        {
-            color: #cccccc !important;
-        }
-        .elementor-panel .elementor-panel-footer-sub-menu-item.active>*
-        {
-            background-color: #efefef;
-            color:{$this->colorEditorIconHover};
-        }
-        .elementor-panel .elementor-panel-menu-item:hover:not(.active)>*,
-        .elementor-panel .elementor-panel-footer-sub-menu-item:hover:not(.elementor-disabled):not(.active)>*
-        {
-            background-color: #f7f7f7;
-            color:{$this->colorEditorIconHover};
-        }
-        .elementor-panel .elementor-panel-footer-tool
-        {
-            color: {$this->colorEditorIcon};
-        }
-        .elementor-panel .elementor-panel-footer-tool i:before
-        {
-            font-size: 19px;
-        }
-        
-        .elementor-panel .elementor-panel-footer-tool:hover:not(.elementor-disabled)>*,
-        .elementor-panel .elementor-panel-footer-tool.elementor-open:not(.elementor-disabled)>*
-        {
-            color:{$this->colorEditorIconHover};
-        }
-        .elementor-panel .elementor-panel-footer-tool.elementor-open
-        {
-            box-shadow: inset 0px -3px 0px 0px {$this->colorEditorIconHover};
-        }
-        /*---- [Buttons] ----*/
         .elementor-safe-mode-button
         {
             display:none !important;
-        }
-        /*Header*/
-        #elementor-mode-switcher-preview:not([disabled]),
-        .elementor-header-button:not([disabled])
-        {
-            color: {$this->colorEditorIcon} !important;
-        }
-        .elementor-panel .elementor-panel-scheme-discard .elementor-button, 
-        .elementor-panel .elementor-panel-scheme-reset .elementor-button
-        {
-            color: {$this->colorEditorIcon} !important;
-        }
-        #elementor-mode-switcher-preview:hover:not([disabled])>*,
-        .elementor-header-button:hover:not([disabled])>*,
-        .elementor-panel .elementor-element:not([disabled]):hover,
-        .elementor-panel .elementor-panel-scheme-discard .elementor-button:hover, 
-        .elementor-panel .elementor-panel-scheme-reset .elementor-button:hover
-        {
-            color:{$this->colorEditorIconHover} !important;
-        }
-        #elementor-template-library-header-preview-insert-wrapper .elementor-template-library-template-insert,
-        .elementor-button.elementor-button-success:not([disabled]) {
-            background-color: {$this->colorActiveElement} !important;
         }
         .elementor-button,
         .elementor-panel #elementor-panel-saver-button-publish, 
@@ -740,7 +729,7 @@ final class PluginsBranding
             background-color: transparent;
             color: #a4afb7;
         }
-        /*---- [Page Handlers] ----*/
+        /*-----------------------------------------------------------[Page Handlers]*/
         .pen-group-icon:after,
         .elementor-context-menu-list__item__icon
         {
@@ -760,9 +749,9 @@ final class PluginsBranding
         .elementor-navigator__element:not(.elementor-navigator__element--hidden)>.elementor-navigator__item.elementor-editing,
         .elementor-context-menu-list__item:not(.elementor-context-menu-list__item--disabled):hover
         { 
-            background-color: {$this->colorEditorHandlerHover}; 
+            background-color: {$this->colorEditorHandlerHover} !important; 
         }
-        /*---- [Modal] ----*/
+        /*-----------------------------------------------------------[Modal]*/
         .elementor-templates-modal .dialog-message
         {
             padding: 10px;
@@ -792,14 +781,9 @@ final class PluginsBranding
         { 
             border-bottom-color: {$this->colorActiveElement}; 
         }
-        /*Finder*/
-        #elementor-finder__modal .eicon-elementor:before
-        {
-            content: '\\e984';
-        }
-        /*---- Template ----*/
-        .elementor-template-library-pro-template,
-        .elementor-template-library-footer-banner
+        /*-----------------------------------------------------------[Template]*/
+        .elementor-template-library-footer-banner,
+        .elementor-template-library-template-remote.elementor-template-library-pro-template/* .elementor-template-library-template-body:before*/
         {
             display:none;
         }
@@ -813,9 +797,32 @@ final class PluginsBranding
             border-width: 8px 10px;
             right: 10px;
         }
+        .elementor-template-library-blank-title
+        {
+            margin-top:10px;
+            font-size: 24px
+        }
+        .elementor-template-library-blank-icon,
+        .elementor-template-library-blank-message
+        {
+            margin-top:0;
+        }
+        .elementor-template-library-blank-message
+        {
+            font-size: 16px
+        }
         #elementor-template-library-modal .eicon-elementor:before
         {
             content: '\\e919';
+        }
+        #elementor-template-library-save-template {
+            width: 95%;
+            padding: 60px;
+            border: 2px dashed #d5dadf;
+            margin: 35px auto;
+            -webkit-transition: background-color .5s;
+            -o-transition: background-color .5s;
+            transition: background-color .5s;
         }
         #elementor-template-library-save-template-name
         {
@@ -832,39 +839,27 @@ final class PluginsBranding
         {
             margin-top: 20px;
         }
-        #elementor-template-library-save-template {
-            width: 95%;
-            background-color: hsla(0,0%,100%,.5);
-            padding: 60px;
-            border: 2px dashed #d5dadf;
-            margin: 35px auto;
-            -webkit-transition: background-color .5s;
-            -o-transition: background-color .5s;
-            transition: background-color .5s;
-        }
         #elementor-template-library-save-template-form>*
         {
             height: 40px;
         }
-        .elementor-template-library-blank-title
-        {
-            margin-top:10px;
-            font-size: 24px
-        }
-        .elementor-template-library-blank-icon,
-        .elementor-template-library-blank-message
-        {
-            margin-top:0;
-        }
-        .elementor-template-library-blank-message
-        {
-            font-size: 16px
-        }
-        /*---- Conditions ----*/
+        /*-----------------------------------------------------------[Conditions]*/
         #elementor-theme-builder-conditions
         {
             margin:0 !important;
             padding-bottom: 60px;
+        }
+        #elementor-theme-builder-conditions__footer
+        {
+            text-align: center !important;
+        }
+        #elementor-theme-builder-conditions .elementor-button-wrapper
+        {
+            margin-top:10px !important;
+        }
+        #elementor-theme-builder-conditions .elementor-repeater-fields-wrapper 
+        {
+            width: auto !important;
         }
         #elementor-pro-panel-saver-conditions
         {
@@ -879,19 +874,12 @@ final class PluginsBranding
             font: normal normal normal 14px/1 FontAwesome;
             content:'\\f070';
         }
-        #elementor-theme-builder-conditions .elementor-button-wrapper
+        /*-----------------------------------------------------------[Finder]*/
+        #elementor-finder__modal .eicon-elementor:before
         {
-            margin-top:10px !important;
+            content: '\\e984';
         }
-        #elementor-theme-builder-conditions .elementor-repeater-fields-wrapper 
-        {
-            width: auto !important;
-        }
-        #elementor-theme-builder-conditions__footer
-        {
-            text-align: center !important;
-        }
-        /*---- [Navigator] ----*/
+        /*-----------------------------------------------------------[Navigator]*/
         #elementor-navigator__close
         {
             font-size: 18px;
@@ -927,7 +915,6 @@ final class PluginsBranding
             font-size: 13px
         }
         .elementor-navigator__element__element-type {
-            color: initial;
             font-size: 14px;
         }
         .elementor-navigator__element:not(.elementor-navigator__element--hidden)>.elementor-navigator__item:not(.elementor-editing) .elementor-navigator__element__toggle
@@ -941,7 +928,7 @@ final class PluginsBranding
         $textNavigator = __('Navigator', 'elementor');
         echo "<script type='text/template' id='tmpl-elementor-panel-header'>
         <div id='elementor-panel-header-menu-button' class='elementor-header-button'>
-            <i class='elementor-icon eicon-arrow-left tooltip-target' aria-hidden='true' data-tooltip='{$textMenu}'></i>
+            <i class='elementor-icon eicon-chevron-left tooltip-target' aria-hidden='true' data-tooltip='{$textMenu}'></i>
             <span class='elementor-screen-only'>{$textMenu}</span>
         </div>
         <div id='elementor-panel-header-title'></div>
@@ -950,15 +937,11 @@ final class PluginsBranding
             <span class='elementor-screen-only'>{$textNavigator}</span>
         </div>
         </script>";
-        /*<div id='elementor-panel-footer-finder' class='elementor-header-button tooltip-target' data-tooltip='{$textFinder}'>
-            <i class='elementor-icon fa fa-search' aria-hidden='true'></i>
-            <span class='elementor-screen-only'>{$textFinder}</span>
-        </div>*/
         $textAddNewSection = __('Add New Section', 'elementor');
         $textAddTemplate = __('Add Template', 'elementor');
         $textDragWidgetHere = __('Drag widget here', 'elementor');
         $textSelectYourStructure = __('Select your Structure', 'elementor');
-        $textClose = __('Close', 'elementor');;
+        $textClose = __('Close', 'elementor');
         echo "<script type='text/template' id='tmpl-elementor-add-section'>
         <div class='elementor-add-section-inner'>
             <div class='elementor-add-section-close'>
@@ -967,7 +950,7 @@ final class PluginsBranding
             </div>
             <div class='elementor-add-new-section'>
                 <div class='elementor-button elementor-button-success elementor-add-section-button'>
-                    <i class='eicon-plus'></i>
+                    <i class='eicon-column'></i>
                     <span>{$textAddNewSection}</span>
                 </div>
                 <div class='elementor-button elementor-button-success elementor-add-template-button'>
@@ -1039,7 +1022,7 @@ final class PluginsBranding
                         <i class='elementor-icon fa fa-folder' aria-hidden='true'></i>
                         <span class='elementor-title'>{$textSaveAsTemplate}</span>
                     </div>
-                    <div id='elementor-panel-footer-preview' class='elementor-panel-footer-sub-menu-item'>
+                    <div id='elementor-panel-footer-saver-preview' class='elementor-panel-footer-sub-menu-item'>
                         <i class='elementor-icon fa fa-share-square-o' aria-hidden='true'></i>
                         <span class='elementor-title'>{$textPreviewChanges}</span>
                     </div>
@@ -1085,6 +1068,7 @@ final class PluginsBranding
             [
 				'elementor-common',
 				'elementor-editor-modules',
+				'elementor-editor-document',
 				'wp-auth-check',
 				'jquery-ui-sortable',
 				'jquery-ui-resizable',
@@ -1099,6 +1083,7 @@ final class PluginsBranding
 				'ace-language-tools',
 				'jquery-hover-intent',
 				'nouislider',
+				'pickr',
 			],
 			ELEMENTOR_VERSION,
 			true
@@ -1111,11 +1096,12 @@ final class PluginsBranding
         $config['help_the_content_url'] = '#';
         $config['help_preview_error_url'] ='#';
         $config['help_right_click_url'] = '#';
-        $config['i18n'] = [
-            'go_to' => __('Go to Dashboard'),
-            'elementor_settings' => __('Settings'),
-            'home' => __('Home'),
-            'widgets_panel' => __('Widgets Panel', 'elementor')];
+        $config['i18n']['home'] = __('Home');
+        $config['i18n']['widgets_panel'] = __('Widgets Panel', 'elementor');
+        $config['i18n']['go_to'] = __('Go to Dashboard');
+        /*$config['i18n'] = [
+            'go_to' => ,
+            'elementor_settings' => __('Settings')];*/
         return $config;
     }
     function handleGetPlaceHolderImgSrc($placeholderImage)
