@@ -9,173 +9,279 @@
  * Text Domain: builderBranding
  * Domain Path: /languages
  */
-if (defined('WPINC') == false) exit;
+if (defined('ABSPATH') == false) {
+	exit;
+}
+
+use Elementor\Elements_Manager;
 use Elementor\Plugin;
 use Elementor\Core\Responsive\Responsive;
-final class PluginsBranding
-{
-    const TEXT_DOMAIN = 'builderBranding';
+use Elementor\Widget_Base;
+use Elementor\Widgets_Manager;
 
-    const OPTION_PLUGIN_NAME = 'Builder';
-    const OPTION_PLUGIN_DESCRIPTION = 'WYSIWYG Builder';
-    const OPTION_PLUGIN_AUTHOR = 'Vitalie Lupu';
-    const OPTION_PLUGIN_URI = 'mailto://vitaliix@gmail.com';
-
-    private $colorEditorLoadingBar = '#29d';//'#39b54a';
-    private $colorEditorIcon = '#555d66'; //'#c2cbd2';
-    private $colorEditorIconHover = '#0073aa'; //'#c2cbd2'; //#6d7882;
-    private $colorEditorHandler = '#4285F4'; //'#71d7f7';
-    private $colorEditorHandlerHover = '#3d6ede';
-    private $colorActiveElement = '#000000';//'green'
-
-    private $logoIcon = '\f538';
-    private $pluginPath = 'elementor/elementor.php';
-    private $pluginPathPro = 'elementor-pro/elementor-pro.php';
-
-    protected static $instances = null;
-    final public static function i()
-    {
-        if (!isset(static::$instances)) {
-            static::$instances = new static();
-        }
-        return static::$instances;
-    }
-    protected function __construct()
-    {
-        if (defined('ELEMENTOR_PRO_VERSION')) {
-            //Disable Tracker Notice
-            add_filter('pre_option_elementor_tracker_notice', [$this, 'handleTrackerOptionNotice']);
-            /*Text*/
-            add_filter('gettext', [$this, 'handleGetText'], 20, 1);
-            add_filter('admin_footer_text', [$this, 'handleTextInAdminFooter'], 100);
-            /*Plugins*/
-            add_filter('all_plugins', [$this, 'handlePluginsAll']);
-            add_filter('plugin_row_meta', [$this, 'handlePluginRowMeta'], 20, 2);
-            /*Admin Visibility*/
-            add_action('admin_menu', [$this, 'handleVisibilityInAdminMenu'], 999);
-            add_action('wp_dashboard_setup', [$this, 'handleVisibilityInDashboard'], 100);
-            /*Styles*/
-            add_action('admin_footer', [$this, 'handleFooterAdmin']);
-            add_action('wp_footer', [$this, 'handleFooterSite'], 99999);
-            add_action('elementor/editor/footer', [$this, 'handleFooterEditor']);
-            add_action('elementor/editor/after_enqueue_styles', [$this, 'handleEditorAfterEnqueueStyles']);
-            add_action('elementor/editor/before_enqueue_scripts', [$this, 'handleEditorBeforeEnqueueScripts']);
-            add_filter('elementor/editor/localize_settings', [$this, 'handleEditorLocalizeSettings']);
-            add_filter('elementor/utils/get_placeholder_image_src', [$this, 'handleGetPlaceHolderImgSrc']);
-            //FILTERS for JET Plugins
-            add_filter('cherry_core_base_url', [$this, 'handleCherryCoreUrl'], 10, 2);
-            add_filter('cx_include_module_url', [$this, 'handleCherryCoreUrl'], 10, 2);
-        }
-    }
-    function handleCherryCoreUrl($url, $file_path){
-        if (empty($file_path) == false){
-            $rootPath = dirname(ABSPATH).DIRECTORY_SEPARATOR;
-            $url = plugins_url().DIRECTORY_SEPARATOR.str_replace($rootPath, '', $url);
-        }
-        return $url;
-    }
-    function handleTrackerOptionNotice()
-    {
-        return '1';
-    }
-    function handleGetText($translatedText)
-    {
-        return str_replace('Elementor', self::OPTION_PLUGIN_NAME, $translatedText);
-    }
-    function handleTextInAdminFooter($footer_text)
-    {
-        //Hide Elementor Footer Message
-        $current_screen = get_current_screen();
-        if ($current_screen && strpos($current_screen->id, 'elementor') !== false) {
-            $footer_text = '';
-        }
-        return $footer_text;
-    }
-    function handlePluginsAll($allPlugins)
-    {
-        if (defined('ELEMENTOR_PLUGIN_BASE') && isset($allPlugins[ELEMENTOR_PLUGIN_BASE])) {
-            $allPlugins[ELEMENTOR_PLUGIN_BASE]['Name'] = self::OPTION_PLUGIN_NAME;
-            //$allPlugins[ELEMENTOR_PLUGIN_BASE]['PluginURI'] = self::OPTION_PLUGIN_URI;
-            $allPlugins[ELEMENTOR_PLUGIN_BASE]['Description'] = self::OPTION_PLUGIN_DESCRIPTION;
-            $allPlugins[ELEMENTOR_PLUGIN_BASE]['Author'] = self::OPTION_PLUGIN_AUTHOR;
-            $allPlugins[ELEMENTOR_PLUGIN_BASE]['AuthorURI'] = self::OPTION_PLUGIN_URI;
-            $allPlugins[ELEMENTOR_PLUGIN_BASE]['Title'] = self::OPTION_PLUGIN_NAME;
-            $allPlugins[ELEMENTOR_PLUGIN_BASE]['AuthorName'] = self::OPTION_PLUGIN_AUTHOR;
-            if (defined('ELEMENTOR_PRO_PLUGIN_BASE')) {
-                $textPro = ' Pro';
-                $allPlugins[ELEMENTOR_PRO_PLUGIN_BASE]['Name'] = self::OPTION_PLUGIN_NAME.$textPro;
-                //$allPlugins[ELEMENTOR_PRO_PLUGIN_BASE]['PluginURI'] = self::OPTION_PLUGIN_URI;
-                $allPlugins[ELEMENTOR_PRO_PLUGIN_BASE]['Description'] = self::OPTION_PLUGIN_DESCRIPTION;
-                $allPlugins[ELEMENTOR_PRO_PLUGIN_BASE]['Author'] = self::OPTION_PLUGIN_AUTHOR;
-                $allPlugins[ELEMENTOR_PRO_PLUGIN_BASE]['AuthorURI'] = self::OPTION_PLUGIN_URI;
-                $allPlugins[ELEMENTOR_PRO_PLUGIN_BASE]['Title'] = self::OPTION_PLUGIN_NAME.$textPro;
-                $allPlugins[ELEMENTOR_PRO_PLUGIN_BASE]['AuthorName'] = self::OPTION_PLUGIN_AUTHOR;
-            }
-            //Hide Current Plugin record from Plugins Page
-            //unset($allPlugins[plugin_basename(__FILE__)]);
-            //Hide Elementor Plugin record from Plugins Page
-            //unset($allPlugins[ELEMENTOR_PLUGIN_BASE]);
-            //if (defined('ELEMENTOR_PRO_PLUGIN_BASE')) unset($allPlugins[ELEMENTOR_PRO_PLUGIN_BASE]);
-        }
-        return $allPlugins;
-    }
-    function handleVisibilityInAdminMenu()
-    {
-        if (isset($_GET['page']) && in_array($_GET['page'], ['go_knowledge_base_site', 'go_elementor_pro'])) {
-            wp_redirect(self::OPTION_PLUGIN_URI);
-            die;
-        }
-        //Remove Page from Admin Menu: Elementor Settings
-        //remove_menu_page('elementor');
-        //Remove Page from Admin Menu: Elementor Template Library
-        //remove_menu_page('edit.php?post_type=elementor_library');
-    }
-    function handleVisibilityInDashboard()
-    {
-        global $wp_meta_boxes;
-        //Hide Elementor Widget Overview
-        if (is_array($wp_meta_boxes) && isset($wp_meta_boxes['dashboard']['normal']['core']['e-dashboard-overview'])) {
-            unset($wp_meta_boxes['dashboard']['normal']['core']['e-dashboard-overview']);
-        }
-    }
-    function handlePluginRowMeta($plugin_meta, $plugin_file)
-    {
-        //Hide Elementor External Links
-        if (defined('ELEMENTOR_PLUGIN_BASE') && ELEMENTOR_PLUGIN_BASE === $plugin_file) {
-            if (isset($plugin_meta['docs'])) {
-                unset($plugin_meta['docs']);
-            }
-            if (isset($plugin_meta['ideo'])) {
-                unset($plugin_meta['ideo']);
-            }
-            if (isset($plugin_meta['video'])) {
-                unset($plugin_meta['video']);
-            }
-        }
-        if (defined('ELEMENTOR_PRO_PLUGIN_BASE')) {
-            if (ELEMENTOR_PRO_PLUGIN_BASE === $plugin_file) {
-                if (isset($plugin_meta['docs'])) {
-                    unset($plugin_meta['docs']);
-                }
-                if (isset($plugin_meta['ideo'])) {
-                    unset($plugin_meta['ideo']);
-                }
-                if (isset($plugin_meta['video'])) {
-                    unset($plugin_meta['video']);
-                }
-                if (isset($plugin_meta['changelog'])) {
-                    unset($plugin_meta['changelog']);
-                }
-            }
-        }
-        return $plugin_meta;
-    }
-    function handleFooterAdmin()
-    {
-        $idCssContent = self::TEXT_DOMAIN;
-        $cssContent = '';
-        //TODO Remove Menu Page Of Elementor not with css but with WP menu handler
-        echo "<style id='{$idCssContent}'>{$cssContent}
+final class PluginsBranding {
+	const TEXT_DOMAIN = 'builderBranding';
+	const OPTION_PLUGIN_NAME = 'Builder';
+	const OPTION_PLUGIN_DESCRIPTION = 'WYSIWYG Builder';
+	const OPTION_PLUGIN_AUTHOR = 'Vitalie Lupu';
+	const OPTION_PLUGIN_URI = 'mailto://vitaliix@gmail.com';
+	private $colorEditorLoadingBar = '#29d';//'#39b54a';
+	private $colorEditorIcon = '#555d66'; //'#c2cbd2';
+	private $colorEditorIconHover = '#0073aa'; //'#c2cbd2'; //#6d7882;
+	private $colorEditorHandler = '#4285F4'; //'#71d7f7';
+	private $colorEditorHandlerHover = '#3d6ede';
+	private $colorActiveElement = '#000000';//'green'
+	private $logoIcon = '\f538';
+	private $pluginPath = 'elementor/elementor.php';
+	private $pluginPathPro = 'elementor-pro/elementor-pro.php';
+	private $excludeWidgets = [/*'common',
+	                           'heading',
+	                           'image',
+	                           'text-editor',
+	                           'video',
+	                           'button',
+	                           'divider',
+	                           'spacer',
+	                           'image-box',
+	                           'google-maps',
+	                           'icon',
+	                           'icon-box',
+	                           'image-gallery',
+	                           'image-carousel',
+	                           'icon-list',
+	                           'counter',
+	                           'progress',
+	                           'testimonial',
+	                           'tabs',
+	                           'accordion',
+	                           'toggle',
+	                           'social-icons',
+	                           'alert',
+	                           'audio',
+	                           'shortcode',
+	                           'html',
+	                           'menu-anchor',
+	                           'sidebar',
+	                           //PRO
+	                           'posts',
+	                           'portfolio',
+	                           'slides',
+	                           'form',
+	                           'login',
+	                           'media-carousel',
+	                           'testimonial-carousel',
+	                           'nav-menu',
+	                           'pricing',
+	                           'facebook-comment',
+	                           'nav-menu',
+	                           'animated-headline',
+	                           'price-list',
+	                           'price-table',
+	                           'facebook-button',
+	                           'facebook-comments',
+	                           'facebook-embed',
+	                           'facebook-page',
+	                           'add-to-cart',
+	                           'categories',
+	                           'elements',
+	                           'products',
+	                           'flip-box',
+	                           'carousel',
+	                           'countdown',
+	                           'share-buttons',
+	                           'author-box',
+	                           'breadcrumbs',
+	                           'search-form',
+	                           'post-navigation',
+	                           'post-comments',
+	                           'theme-elements',
+	                           'blockquote',
+	                           'template',
+	                           'wp-widget-audio',
+	                           'woocommerce',
+	                           'social',
+	                           'library',*/
+	                           // Wordpress
+	                           'wp-widget-pages',
+	                           'wp-widget-archives',
+	                           'wp-widget-media_audio',
+	                           'wp-widget-media_image',
+	                           'wp-widget-media_gallery',
+	                           'wp-widget-media_video',
+	                           'wp-widget-meta',
+	                           'wp-widget-search',
+	                           'wp-widget-text',
+	                           'wp-widget-categories',
+	                           'wp-widget-recent-posts',
+	                           'wp-widget-recent-comments',
+	                           'wp-widget-rss',
+	                           'wp-widget-tag_cloud',
+	                           'wp-widget-nav_menu',
+	                           'wp-widget-custom_html',
+	                           'wp-widget-polylang',
+	                           'wp-widget-calendar',
+	                           'wp-widget-elementor-library'];
+	protected static $instances = null;
+	final public static function i() {
+		if (!isset(static::$instances)) {
+			static::$instances = new static();
+		}
+		return static::$instances;
+	}
+	protected function __construct() {
+		add_filter('woocommerce_admin_disabled', '__return_true', 1);
+		if (defined('ELEMENTOR_PRO_VERSION')) {
+			//Disable Tracker Notice
+			add_filter('pre_option_elementor_tracker_notice', [$this, 'handleTrackerOptionNotice']);
+			/*Text*/
+			add_filter('gettext', [$this,'handleGetText'], 999, 1);
+			add_filter('gettext_with_context', [$this,'handleGetText'], 999, 1);
+			add_filter('admin_footer_text', [$this,'handleTextInAdminFooter'], 100, 0);
+			/*Plugins*/
+			add_filter('all_plugins', [$this,'handlePluginsAll']);
+			add_filter('plugin_row_meta', [$this,'handlePluginRowMeta'], 20, 2);
+			/*Admin Visibility*/
+			add_action('admin_menu', [$this,'handleVisibilityInAdminMenu'], 999);
+			add_action('wp_dashboard_setup', [$this,'handleVisibilityInDashboard'], 100);
+			/*Widgets*/
+			add_action('elementor/widgets/widgets_registered', function (Widgets_Manager $manager) {
+				$widgetNames = $manager->get_widget_types();
+				/*foreach ($this->excludeWidgets as $widgetName) {
+					$manager->unregister_widget_type($widgetName);
+				}*/
+				/**@var $widget Widget_Base*/
+				foreach ($widgetNames as $widgetName => $widget) {
+					$result = strpos($widgetName, 'wp-widget-');
+					if($result !== false){
+						$manager->unregister_widget_type($widgetName);
+					}
+				}
+			}, 15);
+			/*Styles*/
+			add_action('admin_footer', [$this,'handleFooterAdmin']);
+			add_action('wp_footer', [$this,'handleFooterSite'], 99999);
+			add_action('elementor/editor/footer', [$this,'handleFooterEditor']);
+			add_action('elementor/editor/after_enqueue_styles', [$this,'handleEditorAfterEnqueueStyles']);
+			add_action('elementor/editor/before_enqueue_scripts', [$this,'handleEditorBeforeEnqueueScripts']);
+			add_filter('elementor/editor/localize_settings', [$this, 'handleEditorLocalizeSettings']);
+			add_filter('elementor/utils/get_placeholder_image_src', [$this, 'handleGetPlaceHolderImgSrc']);
+			//FILTERS for JET Plugins
+			add_filter('cherry_core_base_url', [$this, 'handleCherryCoreUrl'], 10, 2);
+			add_filter('cx_include_module_url', [$this, 'handleCherryCoreUrl'], 10, 2);
+			//Fix User Locale
+			add_action('set_current_user', [$this, 'handleSetCurrentUser'], 99);
+			add_filter('elementor/document/config', function ($config) {
+				$config['remoteLibrary'] = ['default_route' => 'templates/my-templates'];
+				return $config;
+			});
+		}
+	}
+	function handleSetCurrentUser() {
+		global $current_user;
+		if ($current_user) {
+			$userId = get_current_user_id();
+			$userLocale = get_user_meta($userId, 'locale', true);
+			$current_user->locale = $userLocale;
+		}
+	}
+	function handleCherryCoreUrl($url, $file_path) {
+		if (empty($file_path) == false) {
+			$rootPath = dirname(ABSPATH) . DIRECTORY_SEPARATOR;
+			$url = content_url() . DIRECTORY_SEPARATOR . str_replace($rootPath, '', $url);
+		}
+		return $url;
+	}
+	function handleTrackerOptionNotice() {
+		return '1';
+	}
+	function handleGetText($translatedText) {
+		return str_replace('Elementor', self::OPTION_PLUGIN_NAME, $translatedText);
+	}
+	function handleTextInAdminFooter() {
+		return '';
+	}
+	function handlePluginsAll($allPlugins) {
+		if (defined('ELEMENTOR_PLUGIN_BASE') && isset($allPlugins[ELEMENTOR_PLUGIN_BASE])) {
+			$allPlugins[ELEMENTOR_PLUGIN_BASE]['Name'] = self::OPTION_PLUGIN_NAME;
+			//$allPlugins[ELEMENTOR_PLUGIN_BASE]['PluginURI'] = self::OPTION_PLUGIN_URI;
+			$allPlugins[ELEMENTOR_PLUGIN_BASE]['Description'] = self::OPTION_PLUGIN_DESCRIPTION;
+			$allPlugins[ELEMENTOR_PLUGIN_BASE]['Author'] = self::OPTION_PLUGIN_AUTHOR;
+			$allPlugins[ELEMENTOR_PLUGIN_BASE]['AuthorURI'] = self::OPTION_PLUGIN_URI;
+			$allPlugins[ELEMENTOR_PLUGIN_BASE]['Title'] = self::OPTION_PLUGIN_NAME;
+			$allPlugins[ELEMENTOR_PLUGIN_BASE]['AuthorName'] = self::OPTION_PLUGIN_AUTHOR;
+			if (defined('ELEMENTOR_PRO_PLUGIN_BASE')) {
+				$textPro = ' Pro';
+				$allPlugins[ELEMENTOR_PRO_PLUGIN_BASE]['Name'] = self::OPTION_PLUGIN_NAME . $textPro;
+				//$allPlugins[ELEMENTOR_PRO_PLUGIN_BASE]['PluginURI'] = self::OPTION_PLUGIN_URI;
+				$allPlugins[ELEMENTOR_PRO_PLUGIN_BASE]['Description'] = self::OPTION_PLUGIN_DESCRIPTION;
+				$allPlugins[ELEMENTOR_PRO_PLUGIN_BASE]['Author'] = self::OPTION_PLUGIN_AUTHOR;
+				$allPlugins[ELEMENTOR_PRO_PLUGIN_BASE]['AuthorURI'] = self::OPTION_PLUGIN_URI;
+				$allPlugins[ELEMENTOR_PRO_PLUGIN_BASE]['Title'] = self::OPTION_PLUGIN_NAME . $textPro;
+				$allPlugins[ELEMENTOR_PRO_PLUGIN_BASE]['AuthorName'] = self::OPTION_PLUGIN_AUTHOR;
+			}
+			//Hide Current Plugin record from Plugins Page
+			//unset($allPlugins[plugin_basename(__FILE__)]);
+			//Hide Elementor Plugin record from Plugins Page
+			//unset($allPlugins[ELEMENTOR_PLUGIN_BASE]);
+			//if (defined('ELEMENTOR_PRO_PLUGIN_BASE')) unset($allPlugins[ELEMENTOR_PRO_PLUGIN_BASE]);
+		}
+		return $allPlugins;
+	}
+	function handleVisibilityInAdminMenu() {
+		if (isset($_GET['page']) && in_array($_GET['page'], ['go_knowledge_base_site',
+		                                                     'go_elementor_pro'
+			])) {
+			wp_redirect(self::OPTION_PLUGIN_URI);
+			die;
+		}
+		//Remove Page from Admin Menu: Elementor Settings
+		//remove_menu_page('elementor');
+		//Remove Page from Admin Menu: Elementor Template Library
+		//remove_menu_page('edit.php?post_type=elementor_library');
+	}
+	function handleVisibilityInDashboard() {
+		global $wp_meta_boxes;
+		//Hide Elementor Widget Overview
+		if (is_array($wp_meta_boxes) && isset($wp_meta_boxes['dashboard']['normal']['core']['e-dashboard-overview'])) {
+			unset($wp_meta_boxes['dashboard']['normal']['core']['e-dashboard-overview']);
+		}
+	}
+	function handlePluginRowMeta($plugin_meta, $plugin_file) {
+		//Hide Elementor External Links
+		if (defined('ELEMENTOR_PLUGIN_BASE') && ELEMENTOR_PLUGIN_BASE === $plugin_file) {
+			if (isset($plugin_meta['docs'])) {
+				unset($plugin_meta['docs']);
+			}
+			if (isset($plugin_meta['ideo'])) {
+				unset($plugin_meta['ideo']);
+			}
+			if (isset($plugin_meta['video'])) {
+				unset($plugin_meta['video']);
+			}
+		}
+		if (defined('ELEMENTOR_PRO_PLUGIN_BASE')) {
+			if (ELEMENTOR_PRO_PLUGIN_BASE === $plugin_file) {
+				if (isset($plugin_meta['docs'])) {
+					unset($plugin_meta['docs']);
+				}
+				if (isset($plugin_meta['ideo'])) {
+					unset($plugin_meta['ideo']);
+				}
+				if (isset($plugin_meta['video'])) {
+					unset($plugin_meta['video']);
+				}
+				if (isset($plugin_meta['changelog'])) {
+					unset($plugin_meta['changelog']);
+				}
+			}
+		}
+		return $plugin_meta;
+	}
+	function handleFooterAdmin() {
+		$idCssContent = self::TEXT_DOMAIN;
+		$cssContent = '';
+		//TODO Remove Menu Page Of Elementor not with css but with WP menu handler
+		echo "<style id='{$idCssContent}'>{$cssContent}
         .woocommerce-layout__header .woocommerce-layout__header-breadcrumbs span:first-child,
 		.woocommerce-layout__header .woocommerce-layout__header-breadcrumbs span+span:before,
 		.woocommerce-layout__activity-panel-tabs #activity-panel-tab-inbox{
@@ -270,11 +376,14 @@ final class PluginsBranding
         #elementor-switch-mode,
         body.elementor-editor-active #elementor-editor
         {
-            display: inline-block;
             margin: 0;
             vertical-align: middle;
             height: auto;
             width: auto;
+        }
+        #elementor-go-to-edit-page-link{
+        	background-color: transparent;
+        	border: none;
         }
         #elementor-go-to-edit-page-link.elementor-animate #elementor-editor-button
         {
@@ -296,12 +405,11 @@ final class PluginsBranding
             text-align: left;
         }
         </style>";
-    }
-    function handleFooterSite()
-    {
-        if (is_user_logged_in()) {
-            $idCssContent = self::TEXT_DOMAIN;
-            echo "<style id='{$idCssContent}'>
+	}
+	function handleFooterSite() {
+		if (is_user_logged_in()) {
+			$idCssContent = self::TEXT_DOMAIN;
+			echo "<style id='{$idCssContent}'>
             /*Logo*/
             #wpadminbar #wp-admin-bar-elementor_edit_page>.ab-item:before {
                 content: '{$this->logoIcon}';
@@ -328,6 +436,14 @@ final class PluginsBranding
             {
                 padding: 10px 20px;
             }
+            .elementor-add-section-button,
+            .elementor-add-template-button{
+            	cursor: pointer;
+            }
+            .elementor-add-section-button *,
+            .elementor-add-template-button *{
+            	color: white;
+            }
             div.elementor-add-section-button,
             div.elementor-add-template-button,
             div.elementor-template-library-template-remote.elementor-template-library-pro-template .elementor-template-library-template-body:before
@@ -353,11 +469,10 @@ final class PluginsBranding
             .elementor-column.elementor-dragging-on-child > .elementor-element-overlay{
                 border: 1px solid {$this->colorEditorHandler};
             }
-            .elementor-editor-section-settings .elementor-editor-element-setting:first-child:before{
+            .elementor-editor-section-settings .elementor-editor-element-setting:first-child:before,
+            .elementor-editor-section-settings .elementor-editor-element-setting:last-child:after{
                 border-right-color: {$this->colorEditorHandler};
-            }
-            .elementor-editor-section-settings .elementor-editor-element-setting:last-child:after {
-                border-left-color: {$this->colorEditorHandler};
+                display: none;
             }
             .elementor-editor-section-settings .elementor-editor-element-setting:hover {
                 background-color: {$this->colorEditorHandlerHover}; 
@@ -372,11 +487,10 @@ final class PluginsBranding
                 border: 3px dashed {$this->colorEditorHandler}; 
             }
             </style";
-        }
-    }
-    function handleEditorAfterEnqueueStyles()
-    {
-        wp_add_inline_style('elementor-editor', "/*General*/
+		}
+	}
+	function handleEditorAfterEnqueueStyles() {
+		wp_add_inline_style('elementor-editor', "/*General*/
         ::selection {
           background: {$this->colorEditorHandlerHover} !important; /* WebKit/Blink Browsers */
         }
@@ -782,6 +896,8 @@ final class PluginsBranding
             border-bottom-color: {$this->colorActiveElement}; 
         }
         /*-----------------------------------------------------------[Template]*/
+        .elementor-component-tab[data-tab='templates/blocks'],
+        .elementor-component-tab[data-tab='templates/pages'], 
         .elementor-template-library-footer-banner,
         .elementor-template-library-template-remote.elementor-template-library-pro-template/* .elementor-template-library-template-body:before*/
         {
@@ -921,12 +1037,11 @@ final class PluginsBranding
         {
             color:{$this->colorEditorIcon};
         }");
-    }
-    function handleFooterEditor()
-    {
-        $textMenu = __('Menu', 'elementor');
-        $textNavigator = __('Navigator', 'elementor');
-        echo "<script type='text/template' id='tmpl-elementor-panel-header'>
+	}
+	function handleFooterEditor() {
+		$textMenu = __('Menu', 'elementor');
+		$textNavigator = __('Navigator', 'elementor');
+		echo "<script type='text/template' id='tmpl-elementor-panel-header'>
         <div id='elementor-panel-header-menu-button' class='elementor-header-button'>
             <i class='elementor-icon eicon-chevron-left tooltip-target' aria-hidden='true' data-tooltip='{$textMenu}'></i>
             <span class='elementor-screen-only'>{$textMenu}</span>
@@ -937,12 +1052,12 @@ final class PluginsBranding
             <span class='elementor-screen-only'>{$textNavigator}</span>
         </div>
         </script>";
-        $textAddNewSection = __('Add New Section', 'elementor');
-        $textAddTemplate = __('Add Template', 'elementor');
-        $textDragWidgetHere = __('Drag widget here', 'elementor');
-        $textSelectYourStructure = __('Select your Structure', 'elementor');
-        $textClose = __('Close', 'elementor');
-        echo "<script type='text/template' id='tmpl-elementor-add-section'>
+		$textAddNewSection = __('Add New Section', 'elementor');
+		$textAddTemplate = __('Add Template', 'elementor');
+		$textDragWidgetHere = __('Drag widget here', 'elementor');
+		$textSelectYourStructure = __('Select your Structure', 'elementor');
+		$textClose = __('Close', 'elementor');
+		echo "<script type='text/template' id='tmpl-elementor-add-section'>
         <div class='elementor-add-section-inner'>
             <div class='elementor-add-section-close'>
                 <i class='eicon-close' aria-hidden='true'></i>
@@ -976,25 +1091,25 @@ final class PluginsBranding
             </div>
         </div>
         </script>";
-        $document = Plugin::$instance->documents->get(Plugin::$instance->editor->get_post_id());
-        $textPage = $document::get_title();//__('Page');
-        $textSettings = __('Settings', 'elementor');
-        $textHistory = __('History', 'elementor');
-        $textPreviewChanges = __('Preview Changes', 'elementor');
-        $breakpoints = Responsive::get_breakpoints();
-        $textPreviewForBreakPoint = sprintf(__('Preview for %s', 'elementor'), $breakpoints['md'] . 'px');
-        $textWidgetsPanel = __('Widgets Panel', 'elementor');
-        $textResponsiveMode = __('Responsive Mode', 'elementor');
-        $textDesktop = __('Desktop', 'elementor');
-        $textDefaultPreview = __('Default Preview', 'elementor');
-        $textTablet = __('Tablet', 'elementor');
-        $textMobile = __('Mobile', 'elementor');
-        $textPreviewFor360px = __('Preview for 360px', 'elementor');
-        $textPublish = __('Publish', 'elementor');
-        $textSaveOptions = __('Save Options', 'elementor');
-        $textSaveDraft = __('Save Draft', 'elementor');
-        $textSaveAsTemplate = __('Save as Template', 'elementor');
-        echo "<script type='text/template' id='tmpl-elementor-panel-footer-content'>
+		$document = Plugin::$instance->documents->get(Plugin::$instance->editor->get_post_id());
+		$textPage = $document::get_title();//__('Page');
+		$textSettings = __('Settings', 'elementor');
+		$textHistory = __('History', 'elementor');
+		$textPreviewChanges = __('Preview Changes', 'elementor');
+		$breakpoints = Responsive::get_breakpoints();
+		$textPreviewForBreakPoint = sprintf(__('Preview for %s', 'elementor'), $breakpoints['md'] . 'px');
+		$textWidgetsPanel = __('Widgets Panel', 'elementor');
+		$textResponsiveMode = __('Responsive Mode', 'elementor');
+		$textDesktop = __('Desktop', 'elementor');
+		$textDefaultPreview = __('Default Preview', 'elementor');
+		$textTablet = __('Tablet', 'elementor');
+		$textMobile = __('Mobile', 'elementor');
+		$textPreviewFor360px = __('Preview for 360px', 'elementor');
+		$textPublish = __('Publish', 'elementor');
+		$textSaveOptions = __('Save Options', 'elementor');
+		$textSaveDraft = __('Save Draft', 'elementor');
+		$textSaveAsTemplate = __('Save as Template', 'elementor');
+		echo "<script type='text/template' id='tmpl-elementor-panel-footer-content'>
         <div id='elementor-panel-footer-settings' class='elementor-panel-footer-tool elementor-toggle-state tooltip-target' data-tooltip='{$textSettings}'>
             <i class='fa fa-cog' aria-hidden='true'></i>
             <span class='elementor-screen-only'>{$textPage}: {$textSettings}</span>
@@ -1057,60 +1172,50 @@ final class PluginsBranding
             </div>
         </div>
         </script>";
-    }
-    function handleEditorBeforeEnqueueScripts()
-    {
-        $pathToPluginDir = plugins_url('/', __FILE__);
-        wp_deregister_script('elementor-editor');
-        wp_register_script(
-            'elementor-editor',
-            "{$pathToPluginDir}/editor.js",
-            [
-				'elementor-common',
-				'elementor-editor-modules',
-				'elementor-editor-document',
-				'wp-auth-check',
-				'jquery-ui-sortable',
-				'jquery-ui-resizable',
-				'perfect-scrollbar',
-				'nprogress',
-				'tipsy',
-				'imagesloaded',
-				'heartbeat',
-				'jquery-elementor-select2',
-				'flatpickr',
-				'ace',
-				'ace-language-tools',
-				'jquery-hover-intent',
-				'nouislider',
-				'pickr',
-			],
-			ELEMENTOR_VERSION,
-			true
-		);
-    }
-    function handleEditorLocalizeSettings($config)
-    {
-        $config['elementor_site'] = '#';
-        $config['docs_elementor_site'] = '#';
-        $config['help_the_content_url'] = '#';
-        $config['help_preview_error_url'] ='#';
-        $config['help_right_click_url'] = '#';
-        $config['i18n']['home'] = __('Home');
-        $config['i18n']['widgets_panel'] = __('Widgets Panel', 'elementor');
-        $config['i18n']['go_to'] = __('Go to Dashboard');
-        /*$config['i18n'] = [
-            'go_to' => ,
-            'elementor_settings' => __('Settings')];*/
-        return $config;
-    }
-    function handleGetPlaceHolderImgSrc($placeholderImage)
-    {
-        if ($placeholderImage) {
-            $placeholderImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABLAAAAMgCAIAAAC8ggxVAAAACXBIWXMAAAsTAAALEwEAmpwYAAAZkElEQVR4nO3dUWvb2LrHYU9kCIkhFm6uUqZQ6Pf/RAcOnDKFDalxCmkpVGZfaG+f0KapHUtay/4/D3MxDSFZZcoov76vpL8+/et+BgAAQJ6L0gcAAACgDEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABA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AAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACDUvwHpcB0NCougigAAAABJRU5ErkJggg==";
-        }
-        return $placeholderImage;
-    }
+	}
+	function handleEditorBeforeEnqueueScripts() {
+		$pathToPluginDir = plugins_url('/', __FILE__);
+		wp_deregister_script('elementor-editor');
+		$requiredScripts = ['elementor-common',
+		                    'elementor-editor-modules',
+		                    'elementor-editor-document',
+		                    'wp-auth-check',
+		                    'jquery-ui-sortable',
+		                    'jquery-ui-resizable',
+		                    'perfect-scrollbar',
+		                    'nprogress',
+		                    'tipsy',
+		                    'imagesloaded',
+		                    'heartbeat',
+		                    'jquery-elementor-select2',
+		                    'flatpickr',
+		                    'ace',
+		                    'ace-language-tools',
+		                    'jquery-hover-intent',
+		                    'nouislider',
+		                    'pickr'];
+		wp_register_script('elementor-editor', "{$pathToPluginDir}/editor.js", $requiredScripts, ELEMENTOR_VERSION, true);
+	}
+	function handleEditorLocalizeSettings($config) {
+		$config['elementor_site'] = '#';
+		$config['docs_elementor_site'] = '#';
+		$config['help_the_content_url'] = '#';
+		$config['help_preview_error_url'] = '#';
+		$config['help_right_click_url'] = '#';
+		$config['i18n']['home'] = __('Home');
+		$config['i18n']['widgets_panel'] = __('Widgets Panel', 'elementor');
+		$config['i18n']['go_to'] = __('Go to Dashboard');
+		/*$config['i18n'] = [
+			'go_to' => ,
+			'elementor_settings' => __('Settings')];*/
+		return $config;
+	}
+	function handleGetPlaceHolderImgSrc($placeholderImage) {
+		if ($placeholderImage) {
+			$placeholderImage = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABLAAAAMgCAIAAAC8ggxVAAAACXBIWXMAAAsTAAALEwEAmpwYAAAZkElEQVR4nO3dUWvb2LrHYU9kCIkhFm6uUqZQ6Pf/RAcOnDKFDalxCmkpVGZfaG+f0KapHUtay/4/D3MxDSFZZcoov76vpL8+/et+BgAAQJ6L0gcAAACgDEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABAKEEIAAAQShACAACEEoQAAAChBCEAAEAoQQgAABBKEAIAAIQShAAAAKEEIQAAQChBCAAAEEoQAgAAhBKEAAAAoQQhAABA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AAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACCUIAQAAAglCAEAAEIJQgAAgFCCEAAAIJQgBAAACCUIAQAAQglCAACAUIIQAAAglCAEAAAIJQgBAABCCUIAAIBQghAAACDUvwHpcB0NCougigAAAABJRU5ErkJggg==";
+		}
+		return $placeholderImage;
+	}
 }
 
 PluginsBranding::i();
